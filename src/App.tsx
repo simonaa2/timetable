@@ -1,10 +1,15 @@
 import { useState } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
-import { ScheduleEvent } from './types';
+import type { ScheduleEvent } from './types';
 import TimetableGrid from './components/TimetableGrid';
 import ScheduleModal from './components/ScheduleModal';
+import Login from './components/Login';
+import { useAuth } from './context/AuthContext';
 
-function App() {
+// Extract our previous App logic into a Dashboard component
+const Dashboard = () => {
+  const { userData, logout } = useAuth();
   const [events, setEvents] = useState<ScheduleEvent[]>([
     {
       id: '1',
@@ -14,15 +19,6 @@ function App() {
       endTime: '10:30',
       color: 'indigo',
       location: 'Room 304'
-    },
-    {
-      id: '2',
-      title: 'Computer Science',
-      day: 'Wednesday',
-      startTime: '13:00',
-      endTime: '15:00',
-      color: 'emerald',
-      location: 'Lab 1'
     }
   ]);
 
@@ -72,12 +68,19 @@ function App() {
     <div className="app-container">
       <header className="header-section">
         <div>
-          <h1 className="gradient-text">Weekly Scheduler</h1>
-          <p style={{ color: 'var(--text-secondary)' }}>Organize your activities with a premium timetable module.</p>
+          <h1 className="gradient-text">High School Timetable</h1>
+          <p style={{ color: 'var(--text-secondary)' }}>
+            Welcome, {userData?.name || 'User'} ({userData?.role || 'Guest'})
+          </p>
         </div>
-        <button className="btn-primary" onClick={handleOpenNewEvent}>
-          + New Event
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          {userData?.role === 'manager' && (
+            <button className="btn-primary" onClick={handleOpenNewEvent}>
+              + New Event
+            </button>
+          )}
+          <button className="btn-secondary" onClick={logout}>Sign Out</button>
+        </div>
       </header>
 
       <main>
@@ -96,6 +99,28 @@ function App() {
         initialData={selectedEvent}
       />
     </div>
+  );
+};
+
+// Main App routing
+function App() {
+  const { currentUser, loading } = useAuth();
+
+  if (loading) {
+    return <div style={{ color: 'white', textAlign: 'center', marginTop: '20vh' }}>Loading Secure Engine...</div>;
+  }
+
+  return (
+    <Routes>
+      <Route 
+        path="/login" 
+        element={!currentUser ? <Login /> : <Navigate to="/" />} 
+      />
+      <Route 
+        path="/*" 
+        element={currentUser ? <Dashboard /> : <Navigate to="/login" />} 
+      />
+    </Routes>
   );
 }
 
