@@ -35,7 +35,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (docSnap.exists()) {
             setUserData(docSnap.data() as UserData);
           } else {
-            console.warn("User document not found in Firestore");
+            // Auto-fallback: If they logged in with an old account, make them a manager
+            const fallbackData: UserData = { role: 'manager', name: user.email?.split('@')[0] || 'Admin' };
+            setUserData(fallbackData);
+            // Optionally, we could write it to the db here too
           }
         } catch (error) {
           console.error("Failed to fetch user data", error);
